@@ -1,0 +1,555 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dean Game Hub</title>
+  <style>
+    :root {
+      --bg-dark: #070d19;
+      --ink: #eef4ff;
+      --muted: #b9c5dd;
+      --card-bg: rgba(13, 24, 47, 0.58);
+      --card-border: rgba(183, 205, 246, 0.38);
+      --accent-a: #22d3ee;
+      --accent-b: #facc15;
+      --accent-c: #7c3aed;
+      --button-bg: #0f172a;
+      --button-ink: #f8fafc;
+      --radius-xl: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      overflow-x: hidden;
+      font-family: "Poppins", "Segoe UI", "Trebuchet MS", sans-serif;
+      color: var(--ink);
+      background: var(--bg-dark);
+    }
+
+    body {
+      position: relative;
+      isolation: isolate;
+      opacity: 0;
+      transform: scale(1.01);
+      transition: opacity 420ms ease, transform 420ms ease;
+    }
+
+    body.ready {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    body.leaving {
+      opacity: 0;
+      transform: scale(0.985);
+      pointer-events: none;
+    }
+
+    .bg {
+      position: fixed;
+      inset: 0;
+      z-index: -4;
+      background-image:
+        linear-gradient(rgba(6, 12, 24, 0.48), rgba(6, 12, 24, 0.66)),
+        url("./bg.png"),
+        url("./game1/bg.jpg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: saturate(1.12) contrast(1.04);
+      transform: scale(1.03);
+    }
+
+    .gradient-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      background: linear-gradient(120deg,
+          rgba(34, 211, 238, 0.20),
+          rgba(124, 58, 237, 0.16),
+          rgba(250, 204, 21, 0.15),
+          rgba(34, 211, 238, 0.20));
+      background-size: 220% 220%;
+      animation: gradientShift 14s ease infinite;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    #particles {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    .page {
+      min-height: 100vh;
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: clamp(18px, 3vw, 34px);
+      display: grid;
+      align-content: center;
+      gap: 22px;
+    }
+
+    .hero {
+      text-align: center;
+      animation: slideUp 560ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+
+    .title {
+      font-size: clamp(42px, 8vw, 92px);
+      line-height: 0.98;
+      letter-spacing: 0.6px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #f8fbff, #22d3ee, #facc15, #f8fbff);
+      background-size: 260% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+      animation: titleFlow 8s linear infinite;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      font-size: clamp(18px, 2.4vw, 32px);
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.24px;
+    }
+
+    .tagline {
+      margin-top: 8px;
+      font-size: clamp(15px, 1.6vw, 21px);
+      color: #e6eefc;
+      opacity: 0.95;
+    }
+
+    .badges {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      animation: slideUp 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      animation-delay: 120ms;
+    }
+
+    .badge {
+      border: 1px solid rgba(198, 220, 255, 0.36);
+      background: rgba(10, 19, 38, 0.5);
+      backdrop-filter: blur(8px);
+      color: #d9e7ff;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      letter-spacing: 0.2px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(14px, 2vw, 20px);
+      animation: slideUp 850ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      animation-delay: 220ms;
+      perspective: 1200px;
+    }
+
+    .card {
+      position: relative;
+      min-height: 270px;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 42px rgba(5, 12, 26, 0.52);
+      overflow: hidden;
+      transform-style: preserve-3d;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+      animation: floatCard 3.6s ease-in-out infinite;
+      animation-delay: var(--float-delay, 0s);
+      will-change: transform;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -40% auto auto -30%;
+      width: 65%;
+      height: 220px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 62%);
+      transform: rotate(-12deg);
+      pointer-events: none;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(130deg, transparent 30%, rgba(34, 211, 238, 0.18), transparent 74%);
+      opacity: 0;
+      transition: opacity 180ms ease;
+      pointer-events: none;
+    }
+
+    .card:hover {
+      border-color: rgba(250, 204, 21, 0.78);
+      box-shadow: 0 24px 52px rgba(4, 10, 22, 0.66), 0 0 36px rgba(34, 211, 238, 0.22);
+      background: rgba(14, 27, 53, 0.66);
+    }
+
+    .card:hover::after {
+      opacity: 1;
+    }
+
+    .card-content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: grid;
+      align-content: center;
+      justify-items: start;
+      gap: 12px;
+      padding: clamp(18px, 2.4vw, 26px);
+      transform: translateZ(24px);
+    }
+
+    .card-title {
+      font-size: clamp(34px, 4.2vw, 56px);
+      line-height: 1.04;
+      font-weight: 800;
+      color: #f7fbff;
+    }
+
+    .card-desc {
+      color: #d2def5;
+      font-size: clamp(15px, 1.4vw, 19px);
+      max-width: 32ch;
+      line-height: 1.35;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .card-tag {
+      border-radius: 999px;
+      border: 1px solid rgba(195, 214, 248, 0.34);
+      background: rgba(8, 18, 35, 0.54);
+      color: #d9e7ff;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .play-btn {
+      margin-top: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: var(--button-ink);
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.25px;
+      border-radius: 12px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+    }
+
+    .play-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(250, 204, 21, 0.66);
+      box-shadow: 0 10px 24px rgba(3, 8, 20, 0.46), 0 0 18px rgba(250, 204, 21, 0.2);
+    }
+
+    .play-btn:active {
+      transform: translateY(0);
+    }
+
+    .footer {
+      text-align: center;
+      font-size: clamp(12px, 1.1vw, 14px);
+      color: #dce6f8;
+      padding-top: 2px;
+      opacity: 0.9;
+      animation: fadeIn 900ms ease both;
+      animation-delay: 380ms;
+    }
+
+    .footer a {
+      color: #facc15;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes titleFlow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 0.9; }
+    }
+
+    @keyframes floatCard {
+      0%, 100% { transform: translateY(0) rotateX(0) rotateY(0); }
+      50% { transform: translateY(-6px) rotateX(0) rotateY(0); }
+    }
+
+    @media (max-width: 940px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        min-height: 235px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 16px;
+        gap: 16px;
+      }
+
+      .card {
+        min-height: 210px;
+      }
+
+      .card-title {
+        font-size: clamp(30px, 8.2vw, 42px);
+      }
+
+      .card-desc {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="gradient-overlay" aria-hidden="true"></div>
+  <canvas id="particles" aria-hidden="true"></canvas>
+
+  <main class="page">
+    <header class="hero">
+      <h1 class="title">Dean Game Hub</h1>
+      <p class="subtitle">Modern Arcade Arena</p>
+      <p class="tagline">Pick your mode. Chase high scores. Own the leaderboard.</p>
+    </header>
+
+    <section class="badges" aria-label="Highlights">
+      <span class="badge">Fast Arcade</span>
+      <span class="badge">Competitive</span>
+      <span class="badge">Leaderboard Ready</span>
+      <span class="badge">Skill-Based</span>
+    </section>
+
+    <section class="grid" aria-label="Games">
+      <article class="card" data-link="./Game/index.html" style="--float-delay: 0s;">
+        <div class="card-content">
+          <h2 class="card-title">Flappy Dean</h2>
+          <p class="card-desc">Precision flight challenge. Dodge tight obstacles, keep rhythm, and push your best run.</p>
+          <div class="card-tags">
+            <span class="card-tag">Reflex</span>
+            <span class="card-tag">Endless</span>
+            <span class="card-tag">Score Rush</span>
+          </div>
+          <button class="play-btn" type="button">Play Now</button>
+        </div>
+      </article>
+
+      <article class="card" data-link="./game1/index.html" style="--float-delay: 0.35s;">
+        <div class="card-content">
+          <h2 class="card-title">Dean's Jet</h2>
+          <p class="card-desc">Aerial survival shooter. Blast incoming rocks, control lanes, and defend your zone.</p>
+          <div class="card-tags">
+            <span class="card-tag">Action</span>
+            <span class="card-tag">Shooter</span>
+            <span class="card-tag">Competitive</span>
+          </div>
+          <button class="play-btn" type="button">Play Now</button>
+        </div>
+      </article>
+    </section>
+
+    <footer class="footer">
+      Yogeshwar Copyrights | Contact:
+      <a href="mailto:yogeshwar.student@gmail.com">yogeshwar.student@gmail.com</a>
+      | <a href="#" id="privacyLink">Privacy Policy</a>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const body = document.body;
+      const cards = Array.from(document.querySelectorAll('.card'));
+      const privacyLink = document.getElementById('privacyLink');
+      const canvas = document.getElementById('particles');
+      const ctx = canvas.getContext('2d');
+
+      requestAnimationFrame(() => body.classList.add('ready'));
+
+      function goTo(url) {
+        if (!url || body.classList.contains('leaving')) return;
+        body.classList.add('leaving');
+        setTimeout(() => {
+          window.location.href = url;
+        }, 320);
+      }
+
+      function playHoverSound() {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          const ac = new AudioCtx();
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(420, ac.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(620, ac.currentTime + 0.08);
+          gain.gain.setValueAtTime(0.0001, ac.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.028, ac.currentTime + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.1);
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.start();
+          osc.stop(ac.currentTime + 0.11);
+          osc.onended = () => ac.close();
+        } catch (_) {
+        }
+      }
+
+      cards.forEach((card) => {
+        const btn = card.querySelector('.play-btn');
+        const link = card.dataset.link;
+
+        card.addEventListener('mousemove', (event) => {
+          const rect = card.getBoundingClientRect();
+          const px = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+          const py = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+          const ry = px * 8;
+          const rx = -py * 8;
+          card.style.transform = `translateY(-6px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+        });
+
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = '';
+        });
+
+        card.addEventListener('mouseenter', playHoverSound);
+
+        card.addEventListener('click', (event) => {
+          if (event.target.closest('button')) return;
+          goTo(link);
+        });
+
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            goTo(link);
+          }
+        });
+
+        if (btn) {
+          btn.addEventListener('click', () => goTo(link));
+        }
+      });
+
+      privacyLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        alert('Privacy Policy: Scores are stored locally in your browser. No personal data is sent to external servers.');
+      });
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      const particleCount = 78;
+      const particles = [];
+
+      function makeParticle() {
+        return {
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 1.8 + 0.6,
+          vx: (Math.random() - 0.5) * 0.28,
+          vy: Math.random() * 0.34 + 0.08,
+          a: Math.random() * 0.45 + 0.15
+        };
+      }
+
+      function initParticles() {
+        particles.length = 0;
+        for (let i = 0; i < particleCount; i += 1) {
+          particles.push(makeParticle());
+        }
+      }
+
+      function drawParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < particles.length; i += 1) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.y > canvas.height + 10) {
+            p.y = -10;
+            p.x = Math.random() * canvas.width;
+          }
+          if (p.x < -10) p.x = canvas.width + 10;
+          if (p.x > canvas.width + 10) p.x = -10;
+
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(219, 234, 254, ${p.a})`;
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        requestAnimationFrame(drawParticles);
+      }
+
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+        initParticles();
+      });
+
+      resizeCanvas();
+      initParticles();
+      drawParticles();
+    })();
+  </script>
+</body>
+</html>
